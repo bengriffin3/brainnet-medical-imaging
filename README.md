@@ -17,3 +17,16 @@ python scripts/explore_data.py
 ```
 
 Visualizations will be saved in the `outputs` directory.
+
+## CNN Training
+
+The project includes scripts for training a CNN model on the dataset:
+```bash
+# Local training (CPU-only, not recommended for full training)
+python scripts/train_model.py
+
+# GPU training via Google Colab (recommended)
+Use scripts/colab_train.py
+```
+
+Training results and model checkpoints are saved in `reports/` and `models/` directories.
