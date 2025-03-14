@@ -29,4 +29,4 @@ python scripts/train_model.py
 Use scripts/colab_train.py
 ```
 
-Training results and model checkpoints are saved in `reports/` and `models/` directories.
+Trained models are saved in the `models` directory.
