@@ -25,4 +25,11 @@ Run the training script with:
 python scripts/train_model.py
 ```
 
-For better performance, it's recommended to run training on a GPU (e.g., using Google Colab). Trained models are saved in the `models` directory.
+## Jupyter Notebooks
+
+Two Jupyter notebooks are provided for interactive experimentation:
+
+1. `01_EDA_and_Preprocessing.ipynb`: Data exploration and preprocessing steps
+2. `02_baseline_model_results.ipynb`: Implementation of baseline CNN model with training and evaluation
+
+The notebooks can be run locally (with GPU recommended) or in Google Colab for free GPU access.
