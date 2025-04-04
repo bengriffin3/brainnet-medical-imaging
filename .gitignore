@@ -27,6 +27,7 @@ ENV/
 
 # Results
 results/
+archive/
 
 # IDE
 .idea/
