@@ -25,6 +25,9 @@ brainnet-env/
 venv/
 ENV/
 
+# Results
+results/
+
 # IDE
 .idea/
 .vscode/
