@@ -117,6 +117,10 @@ def data_setup():
     train_set = torchvision.datasets.ImageFolder(root=train_dir, transform=transform)
     test_set = torchvision.datasets.ImageFolder(root=test_dir, transform=transform)
 
+    # Check the contents of train_set.samples and test_set.samples
+    print(f"Initial number of samples in train set: {len(train_set.samples)}")
+    print(f"Initial number of samples in test set: {len(test_set.samples)}")
+
     # Create a filename-to-label dictionary
     file_to_label_train = dict(zip(df_unique[df_unique['class'] == 'train']['filename'],
                                    df_unique[df_unique['class'] == 'train']['label']))
@@ -124,34 +128,44 @@ def data_setup():
                                   df_unique[df_unique['class'] == 'test']['label']))
 
     # Override the labels with error handling
-    train_set.samples = []
+    train_samples = []
     for path, _ in train_set.samples:
-        try:
-            filename = os.path.basename(path)
-            label = file_to_label_train[filename]
-            train_set.samples.append((path, label_conversion_dict[label]))
-        except KeyError as e:
-            print(f"KeyError: {e} for file {path}. Skipping this file.")
-            continue
+        filename = os.path.basename(path)
+        if filename in file_to_label_train:
+            try:
+                label = file_to_label_train[filename]
+                train_samples.append((path, label_conversion_dict[label]))
+            except KeyError as e:
+                print(f"KeyError: {e} for file {path}. Skipping this file.")
+                continue
+        # else:
+        #     print(f"Filename {filename} not found in file_to_label_train. Skipping file {path}.")
+        #     continue
 
-    # Verify if there are valid entries in train_set.samples
-    print(f"Total samples in train set after overriding labels: {len(train_set.samples)}")
+    # Verify if there are valid entries in train_samples
+    print(f"Total samples in train set after overriding labels: {len(train_samples)}")
 
+    train_set.samples = train_samples  # Update the train set with the new samples
     train_set.targets = [s[1] for s in train_set.samples]
 
-    test_set.samples = []
+    test_samples = []
     for path, _ in test_set.samples:
-        try:
-            filename = os.path.basename(path)
-            label = file_to_label_test[filename]
-            test_set.samples.append((path, label_conversion_dict[label]))
-        except KeyError as e:
-            print(f"KeyError: {e} for file {path}. Skipping this file.")
-            continue
+        filename = os.path.basename(path)
+        if filename in file_to_label_test:
+            try:
+                label = file_to_label_test[filename]
+                test_samples.append((path, label_conversion_dict[label]))
+            except KeyError as e:
+                print(f"KeyError: {e} for file {path}. Skipping this file.")
+                continue
+        # else:
+        #     print(f"Filename {filename} not found in file_to_label_test. Skipping file {path}.")
+        #     continue
 
-    # Verify if there are valid entries in test_set.samples
-    print(f"Total samples in test set after overriding labels: {len(test_set.samples)}")
+    # Verify if there are valid entries in test_samples
+    print(f"Total samples in test set after overriding labels: {len(test_samples)}")
 
+    test_set.samples = test_samples  # Update the test set with the new samples
     test_set.targets = [s[1] for s in test_set.samples]
 
     # Verify total files and target values
@@ -159,7 +173,6 @@ def data_setup():
     print(f"Total files in test set: {len(test_set)}, with target values: {list(set(test_set.targets))}")
 
     return train_set, test_set, label_conversion_dict
-
 
 
 def data_loader(train_set,test_set, batch_size = 64):
@@ -201,8 +214,6 @@ def display_sample(train_set):
         ax.axis('off')
     plt.tight_layout()
     plt.show()
-
-# train_set, test_set = data_setup()
 
 
 def get_transform():
