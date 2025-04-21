@@ -47,7 +47,7 @@ label_conversion_dict = {
             3: 'pituitary'
         }
 
-def data_setup():
+def data_setup(vision_transformer=False):
     # Download dataset (must be assigned or it won't persist)
     dataset_path = kagglehub.dataset_download("masoudnickparvar/brain-tumor-mri-dataset")
 
@@ -111,7 +111,10 @@ def data_setup():
         target_dir = train_class_dir if row['class'] == 'train' else test_class_dir
         shutil.copy2(row['filepath'], os.path.join(target_dir, row['filename']))
 
-    transform = get_transform()
+    if vision_transformer:
+        transform = get_vision_transform()
+    else:
+        transform = get_transform()
 
     # Create ImageFolder datasets
     train_set = torchvision.datasets.ImageFolder(root=train_dir, transform=transform)
@@ -175,7 +178,7 @@ def data_setup():
     return train_set, test_set, label_conversion_dict
 
 
-def data_loader(train_set,test_set, batch_size = 64):
+def data_loader(train_set, test_set, batch_size = 64):
 
     batch_size = batch_size
 
@@ -220,11 +223,6 @@ def get_transform():
     """
     Get the transformation pipeline for training data.
     
-    Note: Currently identical to validation transforms, but kept separate because
-    training transforms will later be enhanced with data augmentation techniques
-    (e.g., random flips, rotations, scaling) to improve model robustness and
-    prevent overfitting.
-    
     Returns:
         transforms.Compose: Composition of transforms
     """
@@ -233,4 +231,18 @@ def get_transform():
     transforms.Resize((128,128)),                 # Resize images to 128x128 pixels
     transforms.ToTensor(),                        # Convert images to PyTorch tensors
     transforms.Normalize(mean=[0.5], std=[0.5])   # Normalize pixel values
+    ])
+
+def get_vision_transform():
+    """
+    Get the transformation pipeline for training data for the Vision Transformers.
+    
+    Returns:
+        transforms.Compose: Composition of transforms
+    """
+    return transforms.Compose([
+    transforms.Grayscale(num_output_channels=3),  # Convert grayscale images to 3-channel RGB (required by ViT)
+    transforms.Resize((224, 224)),  # Resize all images to 224x224 pixels
+    transforms.ToTensor(),  # Convert image to a tensor with values in [0, 1]
+    transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5])  # Normalize pixel values to [-1, 1]
     ])
