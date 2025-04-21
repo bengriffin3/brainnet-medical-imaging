@@ -79,9 +79,12 @@ def predict_single_image(model: nn.Module, test_set, device: torch.device) -> st
 # In[4]:
 
 
-def conf_matrix(model:nn.Module, test_set):
+def conf_matrix(model:nn.Module, test_set, label_conversion_dict):
     
     device = torch.device('cuda')
+
+    # class labels
+    class_labels = list(label_conversion_dict.keys())[:4]
 
     true_labels = []
     predicted_labels = []
@@ -101,12 +104,12 @@ def conf_matrix(model:nn.Module, test_set):
     predicted_labels_names = [label_conversion_dict[l] for l in predicted_labels]
 
     # Generate confusion matrix
-    conf_matrix = confusion_matrix(true_labels_names, predicted_labels_names, labels=labels)
+    conf_matrix = confusion_matrix(true_labels_names, predicted_labels_names, labels=class_labels)
 
     # Plot
     plt.figure(figsize=(6, 6))
     sns.heatmap(conf_matrix, annot=True, fmt='d', cmap='Blues', 
-            xticklabels=labels, yticklabels=labels)
+            xticklabels=class_labels, yticklabels=class_labels)
     plt.xlabel('Predicted Labels')
     plt.ylabel('True Labels')
     plt.title('Confusion Matrix')
@@ -122,7 +125,7 @@ def conf_matrix(model:nn.Module, test_set):
 # In[6]:
 
 
-def summary(conf_matrix):
+def summary(conf_matrix, class_labels):
     
     print("Summary: \n")
     print("We have \n")
@@ -132,12 +135,12 @@ def summary(conf_matrix):
     for i in range(4):
         pred_total = sum(conf_matrix[:,i])
         pred_percent[i] = conf_matrix[i,i]/pred_total
-        print(f"{conf_matrix[i,i]/pred_total:.2%} accuracy rate for predicting {labels[i]}.") 
-        print(f"If {labels[i]} is predicted, the true class of the predicted image could be:")
+        print(f"{conf_matrix[i,i]/pred_total:.2%} accuracy rate for predicting {class_labels[i]}.") 
+        print(f"If {class_labels[i]} is predicted, the true class of the predicted image could be:")
         for j in range(4):
             if j != i:
                 pred_percent[j] = conf_matrix[j,i]/pred_total
-                print(f"{labels[j]} with {pred_percent[j]:.2%} chance")
+                print(f"{class_labels[j]} with {pred_percent[j]:.2%} chance")
         print("\n")
 
 
