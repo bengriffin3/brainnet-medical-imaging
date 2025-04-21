@@ -47,6 +47,121 @@ label_conversion_dict = {
             3: 'pituitary'
         }
 
+# def data_setup():
+#     # Download dataset (must be assigned or it won't persist)
+#     dataset_path = kagglehub.dataset_download("masoudnickparvar/brain-tumor-mri-dataset")
+
+#     # Create a directory for unique files
+#     new_path = '/tmp/unique_files/'
+#     os.makedirs(new_path, exist_ok=True)
+
+#     label_conversion_dict = {
+#             'glioma': 0,
+#             'meningioma': 1,
+#             'notumor': 2,
+#             'pituitary': 3,
+#             0: 'glioma',
+#             1: 'meningioma',
+#             2: 'notumor',
+#             3: 'pituitary'
+#         }
+
+#     # Collect all file paths in the dataset (adjust if files are in subdirectories)
+#     file_paths = []
+#     for root, _, files in os.walk(dataset_path):
+#         for file in files:
+#             file_paths.append(os.path.join(root, file))
+
+#     # Create DataFrame and check duplicates by filename (or hash if needed)
+#     df = pd.DataFrame({'filepath': file_paths})
+#     df['filename'] = df['filepath'].apply(lambda x: os.path.basename(x))
+
+#     # Option 1: Drop duplicates by filename (fastest)
+#     #df_unique = df.drop_duplicates(subset=['filename'], keep='first')
+
+#     # Option 2: Drop duplicates by file content (slower but more accurate)
+#     df['hash'] = df['filepath'].apply(lambda x: hashlib.md5(open(x,'rb').read()).hexdigest())
+#     df_unique = df.drop_duplicates(subset=['hash'], keep='first')
+
+#     df_unique = df_unique.copy()  # Explicit copy
+#     df_unique['label'] = df_unique['filepath'].apply(lambda x: x.split('/')[-2])
+#     df_unique['class'] = df_unique['filename'].apply(lambda x: 'train' if x[:2] == 'Tr' else 'test')
+
+
+#     # Copy unique files to new directory
+#     for filepath in tqdm(df_unique['filepath']):
+#         filename = os.path.basename(filepath)
+#         shutil.copy2(filepath, os.path.join(new_path, filename))
+
+#     print(f"Unique files saved to: {new_path}")
+#     print(f"Total files: {len(df)}, Unique files: {len(df_unique)}")
+
+#     root_dir = '/tmp/brain_tumor_dataset'
+#     os.makedirs(root_dir, exist_ok=True)
+
+#     for _, row in df_unique.iterrows():
+#         class_dir = os.path.join(root_dir, row['class'])
+#         os.makedirs(class_dir, exist_ok=True)
+#         shutil.copy2(row['filepath'], os.path.join(class_dir, row['filename']))
+
+#     # Divide dataset into train and test
+
+#     train_dir = os.path.join(root_dir, 'train')
+#     test_dir = os.path.join(root_dir, 'test')
+
+#     # Create class subdirectories inside train and test
+#     os.makedirs(train_dir, exist_ok=True)
+#     os.makedirs(test_dir, exist_ok=True)
+
+#     # Create subdirectories inside train and test for the images
+#     train_class_dir = os.path.join(train_dir, 'images')
+#     test_class_dir = os.path.join(test_dir, 'images')
+
+#     os.makedirs(train_class_dir, exist_ok=True)
+#     os.makedirs(test_class_dir, exist_ok=True)
+
+#     # Copy files to respective class subdirectories
+#     for _, row in df_unique.iterrows():
+#         target_dir = train_class_dir if row['class'] == 'train' else test_class_dir
+#         shutil.copy2(row['filepath'], os.path.join(target_dir, row['filename']))
+
+#     transform = get_transform()
+
+#     print(f"The following transformations are applied to the original images:")
+#     print(f"Converted to greyscale, Resized to 128x128 pixels, coverted to PyTorch tensors and pixel values normalized.")
+
+
+
+#     # Create ImageFolder datasets
+#     train_set = torchvision.datasets.ImageFolder(root=train_dir, transform=transform)
+#     test_set = torchvision.datasets.ImageFolder(root=test_dir, transform = transform)
+
+#     # Create a filename-to-label dictionary
+#     file_to_label_train = dict(zip(df_unique[df_unique['class']=='train']['filename'], df_unique[df_unique['class']=='train']['label']))
+#     file_to_label_test = dict(zip(df_unique[df_unique['class']=='test']['filename'], df_unique[df_unique['class']=='test']['label']))
+
+#     # Override the labels
+#     train_set.samples = [
+#         (path, label_conversion_dict[file_to_label_train[os.path.basename(path)]])
+#         for path, _ in train_set.samples
+#     ]
+
+#     train_set.targets = [s[1] for s in train_set.samples]
+#     train_labels = [label_conversion_dict[num] for num in set(train_set.targets)]
+
+#     test_set.samples = [
+#         (path, label_conversion_dict[file_to_label_test[os.path.basename(path)]])
+#         for path, _ in test_set.samples
+#     ]
+#     test_set.targets = [s[1] for s in test_set.samples]
+#     test_labels = [label_conversion_dict[num] for num in set(test_set.targets)]
+
+#     print(f"Total files in train set: {len(train_set)}, with target values: {train_labels}")
+#     print(f"Total files in test set: {len(test_set)}, with target values: {test_labels}")
+
+
+#     return train_set, test_set, label_conversion_dict
+
 def data_setup():
     # Download dataset (must be assigned or it won't persist)
     dataset_path = kagglehub.dataset_download("masoudnickparvar/brain-tumor-mri-dataset")
@@ -56,15 +171,15 @@ def data_setup():
     os.makedirs(new_path, exist_ok=True)
 
     label_conversion_dict = {
-            'glioma': 0,
-            'meningioma': 1,
-            'notumor': 2,
-            'pituitary': 3,
-            0: 'glioma',
-            1: 'meningioma',
-            2: 'notumor',
-            3: 'pituitary'
-        }
+        'glioma': 0,
+        'meningioma': 1,
+        'notumor': 2,
+        'pituitary': 3,
+        0: 'glioma',
+        1: 'meningioma',
+        2: 'notumor',
+        3: 'pituitary'
+    }
 
     # Collect all file paths in the dataset (adjust if files are in subdirectories)
     file_paths = []
@@ -80,13 +195,12 @@ def data_setup():
     #df_unique = df.drop_duplicates(subset=['filename'], keep='first')
 
     # Option 2: Drop duplicates by file content (slower but more accurate)
-    df['hash'] = df['filepath'].apply(lambda x: hashlib.md5(open(x,'rb').read()).hexdigest())
+    df['hash'] = df['filepath'].apply(lambda x: hashlib.md5(open(x, 'rb').read()).hexdigest())
     df_unique = df.drop_duplicates(subset=['hash'], keep='first')
 
     df_unique = df_unique.copy()  # Explicit copy
     df_unique['label'] = df_unique['filepath'].apply(lambda x: x.split('/')[-2])
     df_unique['class'] = df_unique['filename'].apply(lambda x: 'train' if x[:2] == 'Tr' else 'test')
-
 
     # Copy unique files to new directory
     for filepath in tqdm(df_unique['filepath']):
@@ -105,7 +219,6 @@ def data_setup():
         shutil.copy2(row['filepath'], os.path.join(class_dir, row['filename']))
 
     # Divide dataset into train and test
-
     train_dir = os.path.join(root_dir, 'train')
     test_dir = os.path.join(root_dir, 'test')
 
@@ -127,46 +240,44 @@ def data_setup():
 
     transform = get_transform()
 
-    # # Define Transformation Pipeline
-    # transform = transforms.Compose([
-    #     transforms.Grayscale(num_output_channels=1),  # Convert to greyscale (i.e., single channel)
-    #     transforms.Resize((128,128)),                 # Resize images to 128x128 pixels
-    #     transforms.ToTensor(),                        # Convert images to PyTorch tensors
-    #     transforms.Normalize(mean=[0.5], std=[0.5])   # Normalize pixel values
-    # ])
-
     print(f"The following transformations are applied to the original images:")
     print(f"Converted to greyscale, Resized to 128x128 pixels, coverted to PyTorch tensors and pixel values normalized.")
 
-
-
     # Create ImageFolder datasets
     train_set = torchvision.datasets.ImageFolder(root=train_dir, transform=transform)
-    test_set = torchvision.datasets.ImageFolder(root=test_dir, transform = transform)
+    test_set = torchvision.datasets.ImageFolder(root=test_dir, transform=transform)
 
     # Create a filename-to-label dictionary
-    file_to_label_train = dict(zip(df_unique[df_unique['class']=='train']['filename'], df_unique[df_unique['class']=='train']['label']))
-    file_to_label_test = dict(zip(df_unique[df_unique['class']=='test']['filename'], df_unique[df_unique['class']=='test']['label']))
+    file_to_label_train = dict(zip(df_unique[df_unique['class'] == 'train']['filename'],
+                                   df_unique[df_unique['class'] == 'train']['label']))
+    file_to_label_test = dict(zip(df_unique[df_unique['class'] == 'test']['filename'],
+                                  df_unique[df_unique['class'] == 'test']['label']))
 
     # Override the labels
-    train_set.samples = [
-        (path, label_conversion_dict[file_to_label_train[os.path.basename(path)]])
-        for path, _ in train_set.samples
-    ]
+    train_set.samples = []
+    for path, _ in train_set.samples:
+        try:
+            train_set.samples.append((path, label_conversion_dict[file_to_label_train[os.path.basename(path)]]))
+        except KeyError as e:
+            print(f"KeyError: {e} for file {path}. Skipping this file.")
+            continue
 
     train_set.targets = [s[1] for s in train_set.samples]
     train_labels = [label_conversion_dict[num] for num in set(train_set.targets)]
 
-    test_set.samples = [
-        (path, label_conversion_dict[file_to_label_test[os.path.basename(path)]])
-        for path, _ in test_set.samples
-    ]
+    test_set.samples = []
+    for path, _ in test_set.samples:
+        try:
+            test_set.samples.append((path, label_conversion_dict[file_to_label_test[os.path.basename(path)]]))
+        except KeyError as e:
+            print(f"KeyError: {e} for file {path}. Skipping this file.")
+            continue
+
     test_set.targets = [s[1] for s in test_set.samples]
     test_labels = [label_conversion_dict[num] for num in set(test_set.targets)]
 
     print(f"Total files in train set: {len(train_set)}, with target values: {train_labels}")
     print(f"Total files in test set: {len(test_set)}, with target values: {test_labels}")
-
 
     return train_set, test_set, label_conversion_dict
 
