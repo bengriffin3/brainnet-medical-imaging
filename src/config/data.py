@@ -48,7 +48,7 @@ label_conversion_dict = {
         }
 
 def data_setup():
-    # Download dataset (must be assigned or it won’t persist)
+    # Download dataset (must be assigned or it won't persist)
     dataset_path = kagglehub.dataset_download("masoudnickparvar/brain-tumor-mri-dataset")
 
     # Create a directory for unique files
@@ -125,13 +125,15 @@ def data_setup():
         target_dir = train_class_dir if row['class'] == 'train' else test_class_dir
         shutil.copy2(row['filepath'], os.path.join(target_dir, row['filename']))
 
-    # Define Transformation Pipeline
-    transform = transforms.Compose([
-        transforms.Grayscale(num_output_channels=1),  # Convert to greyscale (i.e., single channel)
-        transforms.Resize((128,128)),                 # Resize images to 128x128 pixels
-        transforms.ToTensor(),                        # Convert images to PyTorch tensors
-        transforms.Normalize(mean=[0.5], std=[0.5])   # Normalize pixel values
-    ])
+    transform = get_transform()
+
+    # # Define Transformation Pipeline
+    # transform = transforms.Compose([
+    #     transforms.Grayscale(num_output_channels=1),  # Convert to greyscale (i.e., single channel)
+    #     transforms.Resize((128,128)),                 # Resize images to 128x128 pixels
+    #     transforms.ToTensor(),                        # Convert images to PyTorch tensors
+    #     transforms.Normalize(mean=[0.5], std=[0.5])   # Normalize pixel values
+    # ])
 
     print(f"The following transformations are applied to the original images:")
     print(f"Converted to greyscale, Resized to 128x128 pixels, coverted to PyTorch tensors and pixel values normalized.")
@@ -166,7 +168,7 @@ def data_setup():
     print(f"Total files in test set: {len(test_set)}, with target values: {test_labels}")
 
 
-    return train_set, test_set
+    return train_set, test_set, label_conversion_dict
 
 def data_loader(train_set,test_set, batch_size = 64):
 
@@ -208,5 +210,24 @@ def display_sample(train_set):
     plt.tight_layout()
     plt.show()
 
-train_set, test_set = data_setup()
+# train_set, test_set = data_setup()
 
+
+def get_transform():
+    """
+    Get the transformation pipeline for training data.
+    
+    Note: Currently identical to validation transforms, but kept separate because
+    training transforms will later be enhanced with data augmentation techniques
+    (e.g., random flips, rotations, scaling) to improve model robustness and
+    prevent overfitting.
+    
+    Returns:
+        transforms.Compose: Composition of transforms
+    """
+    return transforms.Compose([
+    transforms.Grayscale(num_output_channels=1),  # Convert to greyscale (i.e., single channel)
+    transforms.Resize((128,128)),                 # Resize images to 128x128 pixels
+    transforms.ToTensor(),                        # Convert images to PyTorch tensors
+    transforms.Normalize(mean=[0.5], std=[0.5])   # Normalize pixel values
+    ])

@@ -141,8 +141,141 @@ def summary(conf_matrix):
         print("\n")
 
 
-# In[ ]:
+import torch.optim as optim
+from torch.optim.lr_scheduler import ReduceLROnPlateau
+from tqdm.notebook import tqdm
+from torch.utils.data import DataLoader
+from typing import Dict, List
 
+def train_model(
+    model: nn.Module,
+    train_loader: DataLoader,
+    val_loader: DataLoader,
+    num_epochs: int = 10,
+    learning_rate: float = 0.001,
+) -> Dict[str, List[float]]:
+    """
+    Train the model and return training history.
 
+    Args:
+        model: PyTorch model to train
+        train_loader: Training data loader
+        val_loader: Validation data loader
+        num_epochs: Number of training epochs
+        learning_rate: Initial learning rate
 
+    Returns:
+        Dictionary containing training history
+    """
+    model = model.to(device)
+    criterion = nn.CrossEntropyLoss()
+    optimizer = optim.Adam(model.parameters(), lr=learning_rate)
+    scheduler = ReduceLROnPlateau(optimizer, mode='min', factor=0.5, patience=5)
 
+    # Initialize lists to track metrics and predictions
+    train_loss_list = []
+    test_loss_list = []
+    accuracy_list = []
+    all_predictions = []  # To store predictions for all epochs
+    all_true_labels = []  # To store true labels for all epochs
+
+    for epoch in range(num_epochs):
+        # Training phase
+        model.train()
+        train_loss = 0.0
+        for images, labels in tqdm(train_loader, desc=f'Epoch {epoch+1}/{num_epochs}'):
+            images, labels = images.to(device), labels.to(device)
+
+            optimizer.zero_grad()
+            outputs = model(images)
+            loss = criterion(outputs, labels)
+            loss.backward()
+            optimizer.step()
+
+            train_loss += loss.item()
+
+        # Validation phase
+        model.eval()
+        val_loss = 0.0
+        correct = 0
+        total = 0
+        epoch_predictions = []
+        epoch_true_labels = []
+
+        with torch.no_grad():
+            for images, labels in val_loader:
+                images, labels = images.to(device), labels.to(device)
+                outputs = model(images)
+                val_loss += criterion(outputs, labels).item()
+
+                # Get predictions
+                _, predicted = torch.max(outputs.data, 1)
+                total += labels.size(0)
+                correct += (predicted == labels).sum().item()
+
+                # Store predictions and true labels
+                epoch_predictions.extend(predicted.cpu().numpy())
+                epoch_true_labels.extend(labels.cpu().numpy())
+
+        # Calculate metrics
+        train_loss = train_loss / len(train_loader)
+        val_loss = val_loss / len(val_loader)
+        accuracy = 100 * correct / total
+
+        # Store history
+        train_loss_list.append(train_loss)
+        test_loss_list.append(val_loss)
+        accuracy_list.append(accuracy)
+        all_predictions.append(epoch_predictions)
+        all_true_labels.append(epoch_true_labels)
+
+        # Update learning rate
+        scheduler.step(val_loss)
+
+        # Print metrics for the current epoch
+        print(f'Epoch {epoch+1}/{num_epochs}:')
+        print(f'Train Loss: {train_loss:.4f}, Val Loss: {val_loss:.4f}, Accuracy: {accuracy:.2f}%')
+
+    # Return the complete history including predictions and labels
+    return {
+        'train_loss_list': train_loss_list,
+        'test_loss_list': test_loss_list,
+        'accuracy_list': accuracy_list,
+        'all_predictions': all_predictions,
+        'all_true_labels': all_true_labels,
+    }
+
+from collections import Counter
+
+def analyze_predictions(all_predictions, all_true_labels):
+    num_epochs = len(all_predictions)
+    class_counts_per_epoch = []
+
+    # Count predictions for each epoch
+    for epoch in range(num_epochs):
+        epoch_prediction_counts = Counter(all_predictions[epoch])
+        class_counts_per_epoch.append(epoch_prediction_counts)
+        print(f"Epoch {epoch + 1} Prediction Counts: {epoch_prediction_counts}")
+
+    # Plot the prediction distribution over epochs
+    plt.figure(figsize=(12, 6))
+    for label in range(4):  # Assuming 4 classes: 0, 1, 2, 3
+        counts = [epoch_counts.get(label, 0) for epoch_counts in class_counts_per_epoch]
+        plt.plot(range(1, num_epochs + 1), counts, label=f"Class {label}")
+
+    plt.xlabel("Epoch")
+    plt.ylabel("Prediction Count")
+    plt.title("Prediction Distribution Across Epochs")
+    plt.legend()
+    plt.show()
+
+    # Check if the model is just predicting one or two classes repeatedly
+    flat_predictions = [item for sublist in all_predictions for item in sublist]
+    prediction_counts = Counter(flat_predictions)
+    print(f"\nOverall Prediction Counts Across All Epochs: {prediction_counts}")
+
+    # Calculate overall accuracy
+    flat_true_labels = [item for sublist in all_true_labels for item in sublist]
+    correct_predictions = sum([1 for pred, true in zip(flat_predictions, flat_true_labels) if pred == true])
+    overall_accuracy = 100 * correct_predictions / len(flat_true_labels)
+    print(f"Overall Accuracy Across All Epochs: {overall_accuracy:.2f}%")

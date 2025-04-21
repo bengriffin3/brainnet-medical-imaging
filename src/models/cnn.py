@@ -60,4 +60,131 @@ class CNNModel(nn.Module):
         out = self.leakyRelu(self.fc1(out))
         out = self.fc2(out)
 
-        return out 
+        return out
+    
+
+class BrainTumorCNN(nn.Module):
+    """
+    CNN architecture for brain tumor classification.
+
+    Architecture:
+    - 4 convolutional blocks (each with Conv2d, BatchNorm2d, LeakyReLU, MaxPool2d)
+    - 2 fully connected layers with dropout
+    """
+    def __init__(self, num_classes: int = 4):
+        super(BrainTumorCNN, self).__init__()
+
+        # Convolutional layers
+        self.features = nn.Sequential(
+            # First conv block
+            nn.Conv2d(1, 16, kernel_size=5),
+            nn.BatchNorm2d(16),
+            nn.LeakyReLU(),
+            nn.MaxPool2d(2),
+
+            # Second conv block
+            nn.Conv2d(16, 32, kernel_size=5),
+            nn.BatchNorm2d(32),
+            nn.LeakyReLU(),
+            nn.MaxPool2d(2),
+
+            # Third conv block
+            nn.Conv2d(32, 64, kernel_size=5),
+            nn.BatchNorm2d(64),
+            nn.LeakyReLU(),
+            nn.MaxPool2d(2),
+
+            # Fourth conv block
+            nn.Conv2d(64, 128, kernel_size=5),
+            nn.BatchNorm2d(128),
+            nn.LeakyReLU(),
+            nn.MaxPool2d(2)
+        )
+
+        # Fully connected layers
+        self.classifier = nn.Sequential(
+            nn.Flatten(),
+            nn.Linear(128 * 4 * 4, 1024),
+            nn.LeakyReLU(),
+            nn.Dropout(0.5),  # Add dropout to prevent overfitting
+            nn.Linear(1024, num_classes)
+        )
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        x = self.features(x)
+        x = self.classifier(x)
+        return x
+
+
+class ResidualBlock(nn.Module):
+    def __init__(self, in_channels, out_channels, stride=1):
+        super().__init__()
+        self.conv1 = nn.Conv2d(in_channels, out_channels, kernel_size=3, stride=stride, padding=1)
+        self.bn1 = nn.BatchNorm2d(out_channels)
+        self.conv2 = nn.Conv2d(out_channels, out_channels, kernel_size=3, stride=1, padding=1)
+        self.bn2 = nn.BatchNorm2d(out_channels)
+        
+        # Shortcut connection
+        self.shortcut = nn.Sequential()
+        if stride != 1 or in_channels != out_channels:
+            self.shortcut = nn.Sequential(
+                nn.Conv2d(in_channels, out_channels, kernel_size=1, stride=stride),
+                nn.BatchNorm2d(out_channels)
+            )
+        
+    def forward(self, x):
+        out = torch.tanh(self.bn1(self.conv1(x)))  # Use Tanh activation
+        out = self.bn2(self.conv2(out))
+        out += self.shortcut(x)
+        out = torch.tanh(out)  # Use Tanh activation
+        return out
+    
+# Define the BrainTumorCNN with ResNet blocks
+class BrainTumorCNN_RN(nn.Module):
+    """
+    CNN architecture for brain tumor classification with ResNet blocks.
+
+    Architecture:
+    - 2 convolutional blocks
+    - 2 residual blocks
+    - 2 fully connected layers with dropout
+    """
+    def __init__(self, num_classes: int = 4):
+        super(BrainTumorCNN_RN, self).__init__()
+
+        # Convolutional and residual layers
+        self.features = nn.Sequential(
+            # First conv block
+            nn.Conv2d(1, 16, kernel_size=5),
+            nn.BatchNorm2d(16),
+            nn.LeakyReLU(),
+            nn.MaxPool2d(2),
+
+            # Second conv block
+            nn.Conv2d(16, 32, kernel_size=5),
+            nn.BatchNorm2d(32),
+            nn.LeakyReLU(),
+            nn.MaxPool2d(2),
+
+            # First residual block
+            ResidualBlock(32, 64),
+            nn.MaxPool2d(2),
+
+            # Second residual block
+            ResidualBlock(64, 128),
+            nn.MaxPool2d(2)
+        )
+
+        # Fully connected layers
+        self.classifier = nn.Sequential(
+            nn.Flatten(),
+            nn.Linear(128*7*7, 1024),  # Adjusted input size
+            nn.LeakyReLU(),
+            nn.Dropout(0.5),
+            nn.Linear(1024, num_classes)
+        )
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        x = self.features(x)
+        x = self.classifier(x)
+        return x

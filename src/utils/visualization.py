@@ -9,7 +9,7 @@ from torchvision.utils import make_grid
 from PIL import Image
 import random
 
-def plot_class_distribution(train_counts, test_counts):
+def plot_class_distribution(train_values, test_values, class_labels, ax):
     """
     Plot the class distribution comparison between train and test sets.
     
@@ -17,47 +17,41 @@ def plot_class_distribution(train_counts, test_counts):
         train_counts (dict): Training set class counts
         test_counts (dict): Test set class counts
     """
-    classes = list(train_counts.keys())
-    train_values = [train_counts[c] for c in classes]
-    test_values = [test_counts[c] for c in classes]
-    
-    plt.figure(figsize=(10, 6))
     bar_width = 0.35
-    index = np.arange(len(classes))
+    index = np.arange(len(class_labels))
     
     # Create bars with specific colors
-    bars_train = plt.bar(index, train_values, bar_width, label='Training', color='skyblue')
-    bars_test = plt.bar(index + bar_width, test_values, bar_width, label='Testing', color='lightgreen')
+    bars_train = ax.bar(index, train_values, bar_width, label='Training', color='skyblue')
+    bars_test = ax.bar(index + bar_width, test_values, bar_width, label='Testing', color='lightgreen')
     
     # Add value labels on top of bars
     for bars in [bars_train, bars_test]:
         for bar in bars:
             height = bar.get_height()
-            plt.text(bar.get_x() + bar.get_width()/2., height,
-                    f'{int(height)}',
-                    ha='center', va='bottom')
+            ax.text(bar.get_x() + bar.get_width()/2., height,
+                    f'{int(height)}', ha='center', va='bottom')
     
-    plt.xlabel("Class")
-    plt.ylabel("Number of Images")
-    plt.title("Class Distribution Comparison")
-    plt.xticks(index + bar_width/2, classes, rotation=45)
-    plt.legend()
-    plt.tight_layout()
+    ax.set_xlabel("Class")
+    ax.set_ylabel("Number of Images")
+    ax.set_title("Class Distribution Comparison")
+    ax.set_xticks(index + bar_width/2)
+    ax.set_ylim(0, max(max(train_values), max(test_values)) + 300)
+    ax.set_xticklabels(class_labels, rotation=45)
+    ax.legend()
 
-def plot_pixel_distribution(image_tensor):
+def plot_pixel_distribution(image_tensor, ax):
     """
     Plot the distribution of pixel intensities in an image.
     
     Args:
         image_tensor (torch.Tensor): Input image tensor
     """
-    plt.figure(figsize=(10, 6))
+
     pixel_values = image_tensor.numpy().flatten()
-    plt.hist(pixel_values, bins=50, density=True)
-    plt.xlabel('Pixel Intensity')
-    plt.ylabel('Density')
-    plt.title('Distribution of Pixel Intensities')
-    plt.tight_layout()
+    ax.hist(pixel_values, bins=50, density=True)
+    ax.set_xlabel('Pixel Intensity')
+    ax.set_ylabel('Density')
+    ax.set_title('Distribution of Pixel Intensities')
 
 def plot_sample_images(dataloader, nrows=3, ncols=3):
     """
@@ -122,7 +116,7 @@ def plot_original_vs_transformed(dataset, transform, num_samples=6):
     
     # Create figure with 3x4 grid (3 rows, 4 columns)
     nrows, ncols = 3, 4
-    fig, axes = plt.subplots(nrows, ncols, figsize=(16, 12))
+    fig, axes = plt.subplots(nrows, ncols, figsize=(8, 6))
     
     # Iterate over samples to fill the entire grid
     for i in range(num_samples):
@@ -136,30 +130,35 @@ def plot_original_vs_transformed(dataset, transform, num_samples=6):
         orig_shape = img_orig_np.shape
         orig_mean = img_orig_np.mean()
         orig_std = img_orig_np.std()
+        orig_type = type(img_orig)
         
         # Apply transformation
         img_trans = transform(img_orig)
         trans_shape = tuple(img_trans.shape)
         trans_mean = img_trans.mean().item()
         trans_std = img_trans.std().item()
+        trans_type = type(img_trans)
         
         # Display original image
         axes[row, col_start].imshow(img_orig)
         axes[row, col_start].set_title(
-            f"Original: {orig_shape}\nMean: {orig_mean:.2f}\nStd: {orig_std:.2f}",
-            fontsize=12
+            # f"Original: {orig_shape}\nMean: {orig_mean:.2f}\nStd: {orig_std:.2f}",
+            f"Original: {orig_shape}\nMean: {orig_mean:.2f}, Std: {orig_std:.2f}\nType: {orig_type.__name__}",
+            fontsize=9
         )
         axes[row, col_start].axis('off')
         
         # Display transformed image
         axes[row, col_start + 1].imshow(img_trans.squeeze(), cmap="gray")
         axes[row, col_start + 1].set_title(
-            f"Transformed: {trans_shape}\nMean: {trans_mean:.2f}\nStd: {trans_std:.2f}",
-            fontsize=12
+            # f"Transformed: {trans_shape}\nMean: {trans_mean:.2f}\nStd: {trans_std:.2f}",
+            f"Transformed: {trans_shape}\nMean: {trans_mean:.2f}, Std: {trans_std:.2f}\nType: {trans_type.__name__}",
+            fontsize=9
         )
         axes[row, col_start + 1].axis('off')
     
     plt.tight_layout()
+
 
 def plot_sample_by_class(dataloader):
     """
@@ -191,3 +190,27 @@ def plot_sample_by_class(dataloader):
         ax.set_title(class_name)
         ax.axis('off')
     plt.tight_layout()
+
+from typing import Dict, List
+
+def plot_training_history(history: Dict[str, List[float]]):
+    """Plot training metrics."""
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(15, 5))
+
+    # Plot losses
+    ax1.plot(history['train_loss_list'], label='Train Loss')
+    ax1.plot(history['test_loss_list'], label='Validation Loss')  # Change 'val_loss' to 'test_loss_list'
+    ax1.set_title('Training and Validation Loss', fontsize=14)
+    ax1.set_xlabel('Epoch', fontsize=14)
+    ax1.set_ylabel('Loss', fontsize=14)
+    ax1.legend(fontsize=12)
+
+    # Plot accuracy
+    ax2.plot(history['accuracy_list'], label='Validation Accuracy')  # Change 'accuracy' to 'accuracy_list'
+    ax2.set_title('Validation Accuracy', fontsize=14)
+    ax2.set_xlabel('Epoch', fontsize=14)
+    ax2.set_ylabel('Accuracy (%)', fontsize=14)
+    ax2.legend(fontsize=12)
+
+    plt.tight_layout()
+    plt.show()
