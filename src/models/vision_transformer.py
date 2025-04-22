@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
 from collections import Counter
+import time
 
 def train_one_epoch(model, dataloader, criterion, optimizer, device):
     """Train the model for one epoch."""
@@ -61,8 +62,11 @@ def run_training(model, train_loader, test_loader, optimizer, scheduler, criteri
     accuracy_list = []
     all_predictions = []
     all_true_labels = []
+    epoch_times = []
 
     for epoch in range(num_epochs):
+        start_time = time.time()
+
         # Train for one epoch
         train_loss = train_one_epoch(model, train_loader, criterion, optimizer, device)
         train_loss_list.append(train_loss)
@@ -80,13 +84,19 @@ def run_training(model, train_loader, test_loader, optimizer, scheduler, criteri
         if scheduler:
             scheduler.step(val_loss)
 
+        # End timer for the epoch
+        end_time = time.time()
+        epoch_time = end_time - start_time
+        epoch_times.append(epoch_time)
+
         # Print metrics for the current epoch
         print(f"Epoch [{epoch+1}/{num_epochs}], "
               f"Train Loss: {train_loss:.4f}, "
               f"Val Loss: {val_loss:.4f}, "
-              f"Accuracy: {accuracy:.2f}%")
+              f"Accuracy: {accuracy:.2f}%, "
+              f"Epoch Time: {epoch_time:.2f} seconds")
 
-    return train_loss_list, test_loss_list, accuracy_list, all_predictions, all_true_labels
+    return train_loss_list, test_loss_list, accuracy_list, all_predictions, all_true_labels, epoch_times
 
 
 

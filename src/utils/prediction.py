@@ -8,6 +8,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.metrics import confusion_matrix
 import seaborn as sns
+import time
 
 import torch
 import torch.nn as nn
@@ -183,6 +184,7 @@ def train_model(
     all_true_labels = []  # To store true labels for all epochs
 
     for epoch in range(num_epochs):
+        start_time = time.time()
         # Training phase
         model.train()
         train_loss = 0.0
@@ -204,6 +206,7 @@ def train_model(
         total = 0
         epoch_predictions = []
         epoch_true_labels = []
+        epoch_times = []
 
         with torch.no_grad():
             for images, labels in val_loader:
@@ -235,9 +238,14 @@ def train_model(
         # Update learning rate
         scheduler.step(val_loss)
 
+        # Calculate and store epoch time
+        epoch_time = time.time() - start_time
+        epoch_times.append(epoch_time)
+
         # Print metrics for the current epoch
         print(f'Epoch {epoch+1}/{num_epochs}:')
         print(f'Train Loss: {train_loss:.4f}, Val Loss: {val_loss:.4f}, Accuracy: {accuracy:.2f}%')
+        print(f'Epoch {epoch+1} took {epoch_time:.2f} seconds')
 
     # Return the complete history including predictions and labels
     return {
@@ -246,6 +254,7 @@ def train_model(
         'accuracy_list': accuracy_list,
         'all_predictions': all_predictions,
         'all_true_labels': all_true_labels,
+        'epoch_times': epoch_times
     }
 
 from collections import Counter

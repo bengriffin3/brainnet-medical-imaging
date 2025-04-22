@@ -214,3 +214,34 @@ def plot_training_history(history: Dict[str, List[float]]):
 
     plt.tight_layout()
     plt.show()
+
+# Function to plot the epoch times for each model
+def plot_epoch_times(epoch_times, model_name, ax):
+
+    # Set epochs based on the length of the epoch times
+    epochs = range(1, len(epoch_times) + 1)
+    ax.plot(epochs, epoch_times, label=f'{model_name} Epoch Time', color='blue')
+    ax.set_title(f"Epoch Times Over Epochs ({model_name})")
+    ax.set_xlabel("Epochs")
+    ax.set_ylabel("Time (seconds)")
+    ax.legend()
+
+# Function to create the plots
+def plot_accuracy_results(train_loss, test_loss, accuracy, model_name, ax1, ax2):
+
+    # Set epochs based on the length of the training loss data
+    epochs = range(1, len(train_loss) + 1)
+    ax1.plot(epochs, train_loss, label=f'{model_name} Train Loss')
+    ax1.plot(epochs, test_loss, label=f'{model_name} Test Loss')
+
+    ax2.plot(epochs, accuracy, label=f'{model_name} Accuracy')
+
+    ax1.set_title(f"Training and Validation Loss Over Epochs")
+    ax1.set_xlabel("Epochs")
+    ax1.set_ylabel("Loss")
+    ax1.legend()
+
+    ax2.set_title(f"Validation Accuracy Over Epochs")
+    ax2.set_xlabel("Epochs")
+    ax2.set_ylabel("Accuracy (%)")
+    ax2.legend()
