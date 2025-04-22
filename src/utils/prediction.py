@@ -269,17 +269,17 @@ def analyze_predictions(all_predictions, all_true_labels):
         class_counts_per_epoch.append(epoch_prediction_counts)
         print(f"Epoch {epoch + 1} Prediction Counts: {epoch_prediction_counts}")
 
-    # Plot the prediction distribution over epochs
-    plt.figure(figsize=(12, 6))
-    for label in range(4):  # Assuming 4 classes: 0, 1, 2, 3
-        counts = [epoch_counts.get(label, 0) for epoch_counts in class_counts_per_epoch]
-        plt.plot(range(1, num_epochs + 1), counts, label=f"Class {label}")
+    # # Plot the prediction distribution over epochs
+    # plt.figure(figsize=(12, 6))
+    # for label in range(4):  # Assuming 4 classes: 0, 1, 2, 3
+    #     counts = [epoch_counts.get(label, 0) for epoch_counts in class_counts_per_epoch]
+    #     plt.plot(range(1, num_epochs + 1), counts, label=f"Class {label}")
 
-    plt.xlabel("Epoch")
-    plt.ylabel("Prediction Count")
-    plt.title("Prediction Distribution Across Epochs")
-    plt.legend()
-    plt.show()
+    # plt.xlabel("Epoch")
+    # plt.ylabel("Prediction Count")
+    # plt.title("Prediction Distribution Across Epochs")
+    # plt.legend()
+    # plt.show()
 
     # Check if the model is just predicting one or two classes repeatedly
     flat_predictions = [item for sublist in all_predictions for item in sublist]
