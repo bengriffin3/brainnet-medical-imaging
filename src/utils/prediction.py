@@ -182,6 +182,7 @@ def train_model(
     accuracy_list = []
     all_predictions = []  # To store predictions for all epochs
     all_true_labels = []  # To store true labels for all epochs
+    epoch_times = []
 
     for epoch in range(num_epochs):
         start_time = time.time()
@@ -206,7 +207,6 @@ def train_model(
         total = 0
         epoch_predictions = []
         epoch_true_labels = []
-        epoch_times = []
 
         with torch.no_grad():
             for images, labels in val_loader:
