@@ -109,15 +109,20 @@ def conf_matrix(model:nn.Module, test_set, label_conversion_dict):
 
     # Plot
     plt.figure(figsize=(6, 6))
-    sns.heatmap(conf_matrix, annot=True, fmt='d', cmap='Blues', 
-            xticklabels=class_labels, yticklabels=class_labels)
-    plt.xlabel('Predicted Labels')
-    plt.ylabel('True Labels')
-    plt.title('Confusion Matrix')
-    plt.xticks(rotation=45)
-    plt.yticks(rotation=0)
+    heatmap = sns.heatmap(conf_matrix, annot=True, fmt='d', cmap='Blues', 
+            xticklabels=class_labels, yticklabels=class_labels,
+            annot_kws={"size": 16})
+    plt.xlabel('Predicted Labels', fontsize=16)
+    plt.ylabel('True Labels', fontsize=16)
+    plt.title('Confusion Matrix', fontsize=16)
+    plt.xticks(rotation=45, fontsize=16)
+    plt.yticks(rotation=0, fontsize=16)
+    colorbar = heatmap.collections[0].colorbar
+    colorbar.ax.tick_params(labelsize=16)
     plt.tight_layout()
     plt.show()
+
+
 
     # Return
     return conf_matrix
