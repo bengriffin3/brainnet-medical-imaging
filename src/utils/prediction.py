@@ -194,16 +194,23 @@ def train_model(
         # Training phase
         model.train()
         train_loss = 0.0
-        for images, labels in tqdm(train_loader, desc=f'Epoch {epoch+1}/{num_epochs}'):
-            images, labels = images.to(device), labels.to(device)
+        for batch in train_loader:
+          if len(batch) == 3:
+            images, topos, labels = batch
+            images, topos, labels = images.to(device), topos.to(device), labels.to(device)
+            outputs = model(images,topos)
 
-            optimizer.zero_grad()
-            outputs = model(images)
-            loss = criterion(outputs, labels)
-            loss.backward()
-            optimizer.step()
+          else:
+            images, labels = batch
+            images, labels = images.to(device), labels.to(device) 
+            outputs =  model(images)
 
-            train_loss += loss.item()
+          loss = criterion(outputs, labels)
+          optimizer.zero_grad()
+          loss.backward()
+          optimizer.step()
+
+          train_loss += loss.item()
 
         # Validation phase
         model.eval()
@@ -214,19 +221,28 @@ def train_model(
         epoch_true_labels = []
 
         with torch.no_grad():
-            for images, labels in val_loader:
-                images, labels = images.to(device), labels.to(device)
-                outputs = model(images)
-                val_loss += criterion(outputs, labels).item()
+            for batch in val_loader:
+              if len(batch) == 3:
+                images, topos, labels = batch
+                images, topos, labels = images.to(device), topos.to(device), labels.to(device)
+                outputs = model(images,topos)
 
-                # Get predictions
-                _, predicted = torch.max(outputs.data, 1)
-                total += labels.size(0)
-                correct += (predicted == labels).sum().item()
+              else:
+                images, labels = batch
+                images, labels = images.to(device), labels.to(device) 
+                outputs =  model(images)
+                
+              
+              val_loss += criterion(outputs, labels).item()
 
-                # Store predictions and true labels
-                epoch_predictions.extend(predicted.cpu().numpy())
-                epoch_true_labels.extend(labels.cpu().numpy())
+              # Get predictions
+              _, predicted = torch.max(outputs.data, 1)
+              total += labels.size(0)
+              correct += (predicted == labels).sum().item()
+
+              # Store predictions and true labels
+              epoch_predictions.extend(predicted.cpu().numpy())
+              epoch_true_labels.extend(labels.cpu().numpy())
 
         # Calculate metrics
         train_loss = train_loss / len(train_loader)
