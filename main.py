@@ -107,20 +107,36 @@ def main(args):
                 {'params': other_params, 'lr': 0.0001}
             ])
             scheduler = ReduceLROnPlateau(optimizer, mode='min', factor=0.5, patience=3)
-            history = run_training(
+            train_loss_list, test_loss_list, accuracy_list, all_predictions, all_true_labels, epoch_times  = run_training(
                 model, train_loader, test_loader,
                 optimizer, scheduler, criterion,
                 num_epochs=args.epochs, device=device,
                 fine_tuning=True
             )
+            history = {
+                'train_loss_list': train_loss_list,
+                'test_loss_list': test_loss_list,
+                'accuracy_list': accuracy_list,
+                'all_predictions': all_predictions,
+                'all_true_labels': all_true_labels,
+                'epoch_times': epoch_times
+                }
         else:
             optimizer = Adam(model.parameters(), lr=0.001)
-            history = run_training(
+            train_loss_list, test_loss_list, accuracy_list, all_predictions, all_true_labels, epoch_times  = run_training(
                 model, train_loader, test_loader,
                 optimizer, None, criterion,
                 num_epochs=args.epochs, device=device,
                 fine_tuning=False
             )
+            history = {
+                'train_loss_list': train_loss_list,
+                'test_loss_list': test_loss_list,
+                'accuracy_list': accuracy_list,
+                'all_predictions': all_predictions,
+                'all_true_labels': all_true_labels,
+                'epoch_times': epoch_times
+                }
 
     else:
         history = train_model(
