@@ -1,30 +1,22 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[1]:
-
-
 import numpy as np
 import matplotlib.pyplot as plt
-from sklearn.metrics import confusion_matrix
-import seaborn as sns
+
 import time
+import torch.optim as optim
+from torch.optim.lr_scheduler import ReduceLROnPlateau
+from torch.utils.data import DataLoader
+from typing import Dict, List
+
 
 import torch
 import torch.nn as nn
 
+
 # Set up device
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-print(f'Using device: {device}')
-
-
-# In[2]:
-
-
-
-
-
-# In[7]:
 
 
 def predict_single_image(model: nn.Module, test_set, device: torch.device) -> str:
@@ -77,59 +69,6 @@ def predict_single_image(model: nn.Module, test_set, device: torch.device) -> st
     return predicted_class
 
 
-# In[4]:
-
-
-def conf_matrix(model:nn.Module, test_set, label_conversion_dict):
-    
-    device = torch.device('cuda')
-
-    # class labels
-    class_labels = list(label_conversion_dict.keys())[:4]
-
-    true_labels = []
-    predicted_labels = []
-
-    model.eval()
-    with torch.no_grad():
-        for image, label in test_set:
-            image_tensor = image.unsqueeze(0).to(device)
-            output = model(image_tensor)
-            _, pred = torch.max(output, 1)
-        
-            true_labels.append(label)  # Keep as numeric
-            predicted_labels.append(pred.item())  # Keep as numeric
-
-    # Convert numeric labels to class names for the confusion matrix
-    true_labels_names = [label_conversion_dict[l] for l in true_labels]
-    predicted_labels_names = [label_conversion_dict[l] for l in predicted_labels]
-
-    # Generate confusion matrix
-    conf_matrix = confusion_matrix(true_labels_names, predicted_labels_names, labels=class_labels)
-
-    # Plot
-    plt.figure(figsize=(6, 6))
-    heatmap = sns.heatmap(conf_matrix, annot=True, fmt='d', cmap='Blues', 
-            xticklabels=class_labels, yticklabels=class_labels,
-            annot_kws={"size": 16})
-    plt.xlabel('Predicted Labels', fontsize=16)
-    plt.ylabel('True Labels', fontsize=16)
-    plt.title('Confusion Matrix', fontsize=16)
-    plt.xticks(rotation=45, fontsize=16)
-    plt.yticks(rotation=0, fontsize=16)
-    colorbar = heatmap.collections[0].colorbar
-    colorbar.ax.tick_params(labelsize=16)
-    plt.tight_layout()
-    plt.show()
-
-
-
-    # Return
-    return conf_matrix
-
-
-# In[6]:
-
 
 def summary(conf_matrix, class_labels):
     
@@ -148,13 +87,6 @@ def summary(conf_matrix, class_labels):
                 pred_percent[j] = conf_matrix[j,i]/pred_total
                 print(f"{class_labels[j]} with {pred_percent[j]:.2%} chance")
         print("\n")
-
-
-import torch.optim as optim
-from torch.optim.lr_scheduler import ReduceLROnPlateau
-from tqdm.notebook import tqdm
-from torch.utils.data import DataLoader
-from typing import Dict, List
 
 def train_model(
     model: nn.Module,
@@ -280,7 +212,40 @@ def train_model(
 
 from collections import Counter
 
-def analyze_predictions(all_predictions, all_true_labels):
+# def analyze_predictions(all_predictions, all_true_labels):
+#     num_epochs = len(all_predictions)
+#     class_counts_per_epoch = []
+
+#     # Count predictions for each epoch
+#     for epoch in range(num_epochs):
+#         epoch_prediction_counts = Counter(all_predictions[epoch])
+#         class_counts_per_epoch.append(epoch_prediction_counts)
+#         print(f"Epoch {epoch + 1} Prediction Counts: {epoch_prediction_counts}")
+
+#     # Check if the model is just predicting one or two classes repeatedly
+#     flat_predictions = [item for sublist in all_predictions for item in sublist]
+#     prediction_counts = Counter(flat_predictions)
+#     print(f"\nOverall Prediction Counts Across All Epochs: {prediction_counts}")
+
+#     # Calculate overall accuracy
+#     flat_true_labels = [item for sublist in all_true_labels for item in sublist]
+#     correct_predictions = sum([1 for pred, true in zip(flat_predictions, flat_true_labels) if pred == true])
+#     overall_accuracy = 100 * correct_predictions / len(flat_true_labels)
+#     print(f"Overall Accuracy Across All Epochs: {overall_accuracy:.2f}%")
+
+def analyze_predictions(all_predictions, all_true_labels, model_name="Model"):
+    """
+    Analyze predictions for a model over all epochs.
+
+    Args:
+        all_predictions: List of lists of predictions per epoch
+        all_true_labels: List of lists of true labels per epoch
+        model_name: Name of the model (string) to print in the output
+    """
+    print(f"\n{'='*60}")
+    print(f"Analyzing predictions for: {model_name}")
+    print(f"{'='*60}")
+
     num_epochs = len(all_predictions)
     class_counts_per_epoch = []
 
@@ -290,25 +255,14 @@ def analyze_predictions(all_predictions, all_true_labels):
         class_counts_per_epoch.append(epoch_prediction_counts)
         print(f"Epoch {epoch + 1} Prediction Counts: {epoch_prediction_counts}")
 
-    # # Plot the prediction distribution over epochs
-    # plt.figure(figsize=(12, 6))
-    # for label in range(4):  # Assuming 4 classes: 0, 1, 2, 3
-    #     counts = [epoch_counts.get(label, 0) for epoch_counts in class_counts_per_epoch]
-    #     plt.plot(range(1, num_epochs + 1), counts, label=f"Class {label}")
-
-    # plt.xlabel("Epoch")
-    # plt.ylabel("Prediction Count")
-    # plt.title("Prediction Distribution Across Epochs")
-    # plt.legend()
-    # plt.show()
-
-    # Check if the model is just predicting one or two classes repeatedly
+    # Overall prediction counts
     flat_predictions = [item for sublist in all_predictions for item in sublist]
     prediction_counts = Counter(flat_predictions)
     print(f"\nOverall Prediction Counts Across All Epochs: {prediction_counts}")
 
-    # Calculate overall accuracy
+    # Overall accuracy
     flat_true_labels = [item for sublist in all_true_labels for item in sublist]
     correct_predictions = sum([1 for pred, true in zip(flat_predictions, flat_true_labels) if pred == true])
     overall_accuracy = 100 * correct_predictions / len(flat_true_labels)
     print(f"Overall Accuracy Across All Epochs: {overall_accuracy:.2f}%")
+    print("\n")  # Add extra spacing between models

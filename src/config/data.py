@@ -9,8 +9,6 @@ Original file is located at
 
 # Standard library imports
 import os
-import pathlib
-from typing import Tuple, Dict, List
 
 import kagglehub
 import pandas as pd
@@ -20,17 +18,15 @@ import hashlib
 
 # PyTorch imports
 import torch
-import torch.nn as nn
-import torch.optim as optim
 from torch.utils.data import Dataset
 from torch.utils.data import DataLoader
 import torchvision
 import torchvision.transforms as transforms
-from torch.optim.lr_scheduler import ReduceLROnPlateau
 
 #Topo imports
 import gudhi as gd
-import PersistenceImages.persistence_images as pimg
+# import PersistenceImages.persistence_images as pimg
+from persim import PersistenceImager
 
 from PIL import Image
 import random
@@ -39,7 +35,6 @@ import numpy as np
 
 # Set up device
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-print(f'Using device: {device}')
 
 label_conversion_dict = {
             'glioma': 0,
@@ -253,7 +248,8 @@ def get_vision_transform():
     ])
 
 # Define the function that produces Persistent Images from images
-pers_imager = pimg.PersistenceImager()
+# pers_imager = pimg.PersistenceImager()
+pers_imager = PersistenceImager()
 
 def extract_topo_features(image):
     """Input: image (1, 128, 128) tensor → Output: (5, 5) numpy array"""

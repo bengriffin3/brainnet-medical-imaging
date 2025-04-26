@@ -5,9 +5,11 @@ Visualization utilities for the brain tumor classification project.
 import numpy as np
 import matplotlib.pyplot as plt
 import torch
-from torchvision.utils import make_grid
 from PIL import Image
 import random
+from sklearn.metrics import confusion_matrix
+import seaborn as sns
+import torch.nn as nn
 
 def plot_class_distribution(train_values, test_values, class_labels, ax):
     """
@@ -245,3 +247,48 @@ def plot_accuracy_results(train_loss, test_loss, accuracy, model_name, ax1, ax2)
     ax2.set_xlabel("Epochs")
     ax2.set_ylabel("Accuracy (%)")
     ax2.legend()
+
+def conf_matrix(model:nn.Module, test_set, label_conversion_dict):
+    
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+
+    # class labels
+    class_labels = list(label_conversion_dict.keys())[:4]
+
+    true_labels = []
+    predicted_labels = []
+
+    model.eval()
+    with torch.no_grad():
+        for image, label in test_set:
+            image_tensor = image.unsqueeze(0).to(device)
+            output = model(image_tensor)
+            _, pred = torch.max(output, 1)
+        
+            true_labels.append(label)  # Keep as numeric
+            predicted_labels.append(pred.item())  # Keep as numeric
+
+    # Convert numeric labels to class names for the confusion matrix
+    true_labels_names = [label_conversion_dict[l] for l in true_labels]
+    predicted_labels_names = [label_conversion_dict[l] for l in predicted_labels]
+
+    # Generate confusion matrix
+    conf_matrix = confusion_matrix(true_labels_names, predicted_labels_names, labels=class_labels)
+
+    # Plot
+    plt.figure(figsize=(6, 6))
+    heatmap = sns.heatmap(conf_matrix, annot=True, fmt='d', cmap='Blues', 
+            xticklabels=class_labels, yticklabels=class_labels,
+            annot_kws={"size": 16})
+    plt.xlabel('Predicted Labels', fontsize=16)
+    plt.ylabel('True Labels', fontsize=16)
+    plt.title('Confusion Matrix', fontsize=16)
+    plt.xticks(rotation=45, fontsize=16)
+    plt.yticks(rotation=0, fontsize=16)
+    colorbar = heatmap.collections[0].colorbar
+    colorbar.ax.tick_params(labelsize=16)
+    plt.tight_layout()
+    plt.show()
+
+
+    return conf_matrix
