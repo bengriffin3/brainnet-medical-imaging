@@ -50,7 +50,6 @@ outputs/
 *.jpg
 *.jpeg
 *.h5
-*.pth
 *.pt
 *.ckpt
 *.log
