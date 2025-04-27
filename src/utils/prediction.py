@@ -1,8 +1,10 @@
 #!/usr/bin/env python
 # coding: utf-8
 
+import os
 import numpy as np
 import matplotlib.pyplot as plt
+import pickle
 
 import time
 import torch.optim as optim
@@ -265,4 +267,21 @@ def analyze_predictions(all_predictions, all_true_labels, model_name="Model"):
     correct_predictions = sum([1 for pred, true in zip(flat_predictions, flat_true_labels) if pred == true])
     overall_accuracy = 100 * correct_predictions / len(flat_true_labels)
     print(f"Overall Accuracy Across All Epochs: {overall_accuracy:.2f}%")
-    print("\n")  # Add extra spacing between models
+    print("\n")
+
+def load_history(history_filename, results_dir='../results'):
+    """
+    Load only the training history.
+
+    Args:
+        history_filename: Name of the history file (e.g., 'cnn_history_10_epochs.pkl')
+        results_dir: Directory where the history is saved
+
+    Returns:
+        history: Loaded training history dictionary
+    """
+    history_path = os.path.join(results_dir, history_filename)
+    with open(history_path, 'rb') as f:
+        history = pickle.load(f)
+
+    return history
