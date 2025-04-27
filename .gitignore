@@ -30,9 +30,7 @@ ENV/
 archive/
 ResNet/
 oulin/
-scripts/colab_train.py   
-scripts/explore_data.py  
-scripts/train_model.py 
+scripts/
 
 # IDE
 .idea/
