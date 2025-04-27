@@ -321,8 +321,8 @@ def data_setup_remove_duplicated(vision_transformer=False):
     test_set = torchvision.datasets.ImageFolder(root=test_dir, transform=transform)
 
     # Check the contents of train_set.samples and test_set.samples
-    print(f"Initial number of samples in train set: {len(train_set.samples)}")
-    print(f"Initial number of samples in test set: {len(test_set.samples)}")
+    #print(f"Initial number of samples in train set: {len(train_set.samples)}")
+    #print(f"Initial number of samples in test set: {len(test_set.samples)}")
 
     # Create a filename-to-label dictionary
     file_to_label_train = dict(zip(df_unique[df_unique['class'] == 'train']['filename'],
